@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+</head>
+
+<body>
+	<br>
+	<h1>ร้านครัวตามใจปาก</h1>
+	<h4>อาหารอร่อยราคายุติธรรม</h4>
+	<h4>ที่อยู่ บ้านเลขที่ 131 หมู่ที่ 9 บ้าน หนองแวง ตำบล โพธิ์ใหญ่ อำเภอ พนมไพร จังหวัด ร้อยเอ็ด โทร 089-5252-456</h4>
+	<br><br>
+	<h4>ยกเลิกรายการ</h4>
+	<label for="quantity">รหัสรายการ:</label>
+	<input type="text" id="ID"/>
+	<button type="button" class="btn btn-danger d-inline" id="clearlist" onclick="cc()">ยกเลิกรายการ</button>
+	<br>
+	<br>
+  </body>
+	<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script>
+		function cc(){
+      var ID = document.getElementById("ID").value
+      document.getElementById("clearlist").blur()
+      if(ID!==""){
+        Swal.fire({
+          title: 'ยกเลิกรายการ',
+          text: "คุณต้องการยกเลิกรายการใช่หรือไม่",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'ใช่',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              C(ID)
+            }
+          })
+      }
+    }
+    function C(ID){
+      google.script.run.withSuccessHandler((M)=>{
+          if(M){
+            Swal.fire('ยกเลิกรายการ','ยกเลิกรายการสำเร็จ','success').then(()=>{
+              document.getElementById("ID").value=""
+            })
+          }
+          else{
+            Swal.fire('ยกเลิกรายการ','ไม่พบรายการ','error').then(()=>{
+              document.getElementById("ID").value=""
+            })
+          }
+     }).cc(ID)
+    }
+
+	</script>
+
+</html>

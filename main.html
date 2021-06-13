@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<base target="_top">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+</head>
+<style>
+	.imgshow {
+		display: block;
+		max-width: 300px;
+		max-height: 95px;
+		width: auto;
+		height: auto;
+	}
+
+	.btn:focus {
+		outline: none;
+		box-shadow: none;
+	}
+</style>
+
+<body>
+	<br>
+	<h1>ร้านครัวตามใจปาก</h1>
+	<h4>อาหารอร่อยราคายุติธรรม</h4>
+	<h4>ที่อยู่ บ้านเลขที่ 131 หมู่ที่ 9 บ้าน หนองแวง ตำบล โพธิ์ใหญ่ อำเภอ พนมไพร จังหวัด ร้อยเอ็ด โทร 089-5252-456</h4>
+	<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+	<label for="quantity">ชื่อลูกค้า:</label>
+	<input type="text" id="customerName"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+	<label for="quantity">เบอร์โทร:</label>
+	<input type="tel" id="tel"/>
+	<br>
+	<br>
+	<center>
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr>
+					<th scope="col">ลำดับ</th>
+					<th scope="col">รูป</th>
+					<th scope="col">เมนู</th>
+					<th scope="col">ราคา</th>
+					<th scope="col">จำนวน</th>
+				</tr>
+			</thead>
+			<tbody id="content"></tbody>
+		</table>
+		<br>
+		<button type="button" class="btn btn-primary" onclick="read()">สั่งอาหาร</button>
+		&nbsp;&nbsp;&nbsp;&nbsp;
+		<button type="button" class="btn btn-danger" id="clearlist" onclick="load()">ล้างรายการ</button>
+		<br>
+		<br>
+	</center>
+		<br>
+		<br>
+
+</body>
+		<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+		<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+		<script>
+			function getPosition() {
+      return new Promise((res, rej) => {
+          navigator.geolocation.getCurrentPosition(res, rej)
+      });
+    }
+
+    async function getlocation() {
+      var data = await getPosition()
+      var lat=data.coords.latitude
+      var long=data.coords.longitude
+      return [lat,long]
+    }
+
+  async function read() {
+   if(!valid()){
+    Swal.fire({
+      icon: 'error',
+      title: 'เกิดข้อผิดพลาด',
+      text: 'กรุณากรอกข้อมูลให้ถูกต้อง',
+      timer:3000
+    })
+    return
+   }
+   else{
+     var quantity =[]
+     var lat,long
+     var tq =""
+     var m = []
+     var tm = ""
+     var p =[]
+     var price = 0
+     var name = $("#customerName").val()
+     var tel = $("#tel").val()
+     var GPS = await getlocation()
+     for(var i=1;i<=$('tr').length;i++){
+        if($(window["quantity"+i]).val()>0){
+          quantity.push(parseInt($(window["quantity"+i]).val()))
+          m.push(i)
+          p.push(parseInt($(window["price"+i]).text()))
+        } 
+    }
+    p.forEach((e,i)=>{
+      price+=e*quantity[i]
+    })
+    for(var i=0;i<quantity.length;i++){
+      if(i!=quantity.length-1){
+        tm+=m[i]+','
+        tq+=quantity[i]+','
+      }
+      else{
+        tm+=m[i]
+        tq+=quantity[i]
+      }
+    }
+    await google.script.run.withSuccessHandler(()=>{
+      Swal.fire({
+     title: "เสร็จสิ้น",
+     text: "การสั่งอาหารเรียบร้อยแล้ว",
+     type: "success",
+     timer: 3000
+     },load())
+    }).savedata(name,price,tel,tm,tq,GPS[0],GPS[1])
+   }
+  }
+    
+  function load(){
+    $("#customerName").val("")
+    $("#tel").val("")
+    $("#clearlist").blur()
+    var HTMLText = ''
+    google.script.run.withSuccessHandler((M)=>{
+      var o = 1
+      M.forEach((e)=>{
+          HTMLText+='<tr>'
+          HTMLText+='<th scope="col">'+o+'</th>'
+          HTMLText+='<th scope="col"><a href="'+e.image+'"><img class="imgshow" src="'+e.image+'"/></a></th>'
+          HTMLText+='<th scope="col">'+e.manu+'</th>'
+          HTMLText+='<th scope="col" id="price'+o+'">'+e.price+'</th>'
+          HTMLText+='<th scope="col"><input type="number" value ="0" id="quantity'+o+'" min="0"></th>'
+          HTMLText+='</tr>'
+          o++
+      })
+      $("#content").html(HTMLText)
+    }).getdata()
+  }
+  
+  function valid(){
+    if(!phone($("#tel").val())){
+      console.log("phone invalid")
+      return false
+    }
+    if($("#customerName").val()==''){
+      console.log("customerName invalid")
+      return false
+    }
+     google.script.run.withSuccessHandler((M)=>{
+     var quantity = []
+     for(var i=1;i<=M.length;i++){
+        if($(window["quantity"+i]).val()>0){
+          quantity.push($(window["quantity"+i]).val())
+        } 
+    }
+    if(quantity.length<=0){
+      console.log("quantity invalid")
+      return false
+    }
+     }).getdata()
+    return true
+  }
+
+  function phone(gth) {
+    if (gth.substring(3, 4) == '-' && gth.substring(7, 8) == '-') // 123-456-7890
+        gth = gth.replace('-', '').replace('-', '');
+    else if (gth.substring(0, 1) == '(' && gth.substring(4, 5) == ')' && gth.substring(8, 9) == '-') // (123)456-7890
+        gth = gth.replace('(', '').replace(')', '').replace('-', '');
+    else if (gth.substring(0, 1) == '(' && gth.substring(4, 5) == ')') // (123)4567890
+        gth = gth.replace('(', '').replace(')', '');        
+    
+    if (!isNaN(gth) && gth.length == 10 && gth[0]==0) {
+        return true;
+    }
+    return false;
+}
+$( document ).ready(function() {
+    load()
+});
+		</script>
+
+</html>
